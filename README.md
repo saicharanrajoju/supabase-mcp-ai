@@ -45,16 +45,16 @@ A production-ready [Model Context Protocol (MCP)](https://modelcontextprotocol.i
 
 ```mermaid
 graph TD
-    Client[MCP Client\n(Claude/IDE)] <--> Server[MCP Server\n(src.server)]
+    Client["MCP Client\n(Claude/IDE)"] <--> Server["MCP Server\n(src.server)"]
     
     subgraph "AI Core"
-        Server <--> Agent[AI Agent\n(LangChain)]
-        Server <--> Search[Schema Search\n(FAISS)]
-        Server <--> Gen[Migration Gen\n(Claude)]
+        Server <--> Agent["AI Agent\n(LangChain)"]
+        Server <--> Search["Schema Search\n(FAISS)"]
+        Server <--> Gen["Migration Gen\n(Claude)"]
     end
     
     subgraph "Data Layer"
-        Agent <--> DB[(Supabase PG)]
+        Agent <--> DB[("Supabase PG")]
         Search <--> DB
         Gen <--> DB
     end
