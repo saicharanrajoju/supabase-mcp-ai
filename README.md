@@ -180,6 +180,4 @@ The server also provides standard Supabase tools:
 - `src/nl_migrations.py`: Migration generation logic.
 - `src/services/`: Core Supabase services.
 
-## 📄 License
 
-MIT License
