@@ -1,0 +1,140 @@
+# Database tool descriptions
+
+get_db_schemas: |
+  List all database schemas with their sizes and table counts.
+
+  Returns a comprehensive overview of all schemas in the database, including:
+  - Schema names
+  - Total size of each schema
+  - Number of tables in each schema
+  - Owner information
+
+  This is useful for getting a high-level understanding of the database structure.
+
+  SAFETY: This is a low-risk read operation that can be executed in SAFE mode.
+
+get_tables: |
+  List all tables, foreign tables, and views in a schema with their sizes, row counts, and metadata.
+
+  Provides detailed information about all database objects in the specified schema:
+  - Table/view names
+  - Object types (table, view, foreign table)
+  - Row counts
+  - Size on disk
+  - Column counts
+  - Index information
+  - Last vacuum/analyze times
+
+  Parameters:
+  - schema_name: Name of the schema to inspect (e.g., 'public', 'auth', etc.)
+
+  SAFETY: This is a low-risk read operation that can be executed in SAFE mode.
+
+get_table_schema: |
+  Get detailed table structure including columns, keys, and relationships.
+
+  Returns comprehensive information about a specific table's structure:
+  - Column definitions (names, types, constraints)
+  - Primary key information
+  - Foreign key relationships
+  - Indexes
+  - Constraints
+  - Triggers
+
+  Parameters:
+  - schema_name: Name of the schema (e.g., 'public', 'auth')
+  - table: Name of the table to inspect
+
+  SAFETY: This is a low-risk read operation that can be executed in SAFE mode.
+
+execute_postgresql: |
+  Execute PostgreSQL statements against your Supabase database.
+
+  IMPORTANT: All SQL statements must end with a semicolon (;).
+
+  OPERATION TYPES AND REQUIREMENTS:
+  1. READ Operations (SELECT, EXPLAIN, etc.):
+     - Can be executed directly without special requirements
+     - Example: SELECT * FROM public.users LIMIT 10;
+
+  2. WRITE Operations (INSERT, UPDATE, DELETE):
+     - Require UNSAFE mode (use live_dangerously('database', True) first)
+     - Example:
+       INSERT INTO public.users (email) VALUES ('user@example.com');
+
+  3. SCHEMA Operations (CREATE, ALTER, DROP):
+     - Require UNSAFE mode (use live_dangerously('database', True) first)
+     - Destructive operations (DROP, TRUNCATE) require additional confirmation
+     - Example:
+       CREATE TABLE public.test_table (id SERIAL PRIMARY KEY, name TEXT);
+
+  MIGRATION HANDLING:
+  All queries that modify the database will be automatically version controlled by the server. You can provide optional migration name, if you want to name the migration.
+   - Respect the following format: verb_noun_detail. Be descriptive and concise.
+   - Examples:
+     - create_users_table
+     - add_email_to_profiles
+     - enable_rls_on_users
+   - If you don't provide a migration name, the server will generate one based on the SQL statement
+   - The system will sanitize your provided name to ensure compatibility with database systems
+   - Migration names are prefixed with a timestamp in the format YYYYMMDDHHMMSS
+
+  SAFETY SYSTEM:
+  Operations are categorized by risk level:
+  - LOW RISK: Read operations (SELECT, EXPLAIN) - allowed in SAFE mode
+  - MEDIUM RISK: Write operations (INSERT, UPDATE, DELETE) - require UNSAFE mode
+  - HIGH RISK: Schema operations (CREATE, ALTER) - require UNSAFE mode
+  - EXTREME RISK: Destructive operations (DROP, TRUNCATE) - require UNSAFE mode and confirmation
+
+  TRANSACTION HANDLING:
+  - DO NOT use transaction control statements (BEGIN, COMMIT, ROLLBACK)
+  - The database client automatically wraps queries in transactions
+  - The SQL validator will reject queries containing transaction control statements
+  - This ensures atomicity and provides rollback capability for data modifications
+
+  MULTIPLE STATEMENTS:
+  - You can send multiple SQL statements in a single query
+  - Each statement will be executed in order within the same transaction
+  - Example:
+    CREATE TABLE public.test_table (id SERIAL PRIMARY KEY, name TEXT);
+    INSERT INTO public.test_table (name) VALUES ('test');
+
+  CONFIRMATION FLOW FOR HIGH-RISK OPERATIONS:
+  - High-risk operations (DROP TABLE, TRUNCATE, etc.) will be rejected with a confirmation ID
+  - The error message will explain what happened and provide a confirmation ID
+  - Review the risks with the user before proceeding
+  - Use the confirm_destructive_operation tool with the provided ID to execute the operation
+
+  IMPORTANT GUIDELINES:
+  - The database client starts in SAFE mode by default for safety
+  - Only enable UNSAFE mode when you need to modify data or schema
+  - Never mix READ and WRITE operations in the same transaction
+  - For destructive operations, be prepared to confirm with the confirm_destructive_operation tool
+
+  WHEN TO USE OTHER TOOLS INSTEAD:
+  - For Auth operations (users, authentication, etc.): Use call_auth_admin_method instead of direct SQL
+    The Auth Admin SDK provides safer, validated methods for user management
+  - For project configuration, functions, storage, etc.: Use send_management_api_request
+    The Management API handles Supabase platform features that aren't directly in the database
+
+  Note: This tool operates on the PostgreSQL database only. API operations use separate safety controls.
+
+retrieve_migrations: |
+  Retrieve a list of all migrations a user has from Supabase.
+
+  Returns a list of migrations with the following information:
+  - Version (timestamp)
+  - Name
+  - SQL statements (if requested)
+  - Statement count
+  - Version type (named or numbered)
+
+  Parameters:
+  - limit: Maximum number of migrations to return (default: 50, max: 100)
+  - offset: Number of migrations to skip for pagination (default: 0)
+  - name_pattern: Optional pattern to filter migrations by name. Uses SQL ILIKE pattern matching (case-insensitive).
+    The pattern is automatically wrapped with '%' wildcards, so "users" will match "create_users_table",
+    "add_email_to_users", etc. To search for an exact match, use the complete name.
+  - include_full_queries: Whether to include the full SQL statements in the result (default: false)
+
+  SAFETY: This is a low-risk read operation that can be executed in SAFE mode.

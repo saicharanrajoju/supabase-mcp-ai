@@ -1,0 +1,146 @@
+repos:
+  # === Syntax & Basic Checks ===
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-ast
+        name: Validate Python syntax
+      - id: check-toml
+        name: Validate TOML files
+      - id: mixed-line-ending
+        name: Normalize line endings
+        args: ['--fix=lf']
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: Ensure file ends with newline
+
+  # === Security ===
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+        name: Check for private keys
+        stages: [pre-commit, pre-push, manual]
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        stages: [pre-commit, manual]
+      - id: debug-statements
+        name: Check for debugger imports
+        stages: [pre-commit, manual]
+
+  # === SQL Linting ===
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.3.1
+    hooks:
+      - id: sqlfluff-lint
+        name: Run SQLFluff linter
+        description: Lint SQL files with SQLFluff
+        types: [sql]
+        args: [
+          "--dialect", "postgres",
+          "--exclude-rules", "L016,L031,LT02",  # Exclude some opinionated rules
+        ]
+        files: ^(supabase_mcp/sql|tests/sql)/
+      - id: sqlfluff-fix
+        name: Run SQLFluff fixer
+        description: Auto-fix SQL files with SQLFluff
+        types: [sql]
+        args: [
+          "--dialect", "postgres",
+          "--exclude-rules", "L016,L031,LT02",  # Exclude some opinionated rules
+        ]
+        files: ^(supabase_mcp/sql|tests/sql)/
+
+  # === Type Checking ===
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.15.0"
+    hooks:
+      - id: mypy
+        name: Run mypy type checker
+        args: [
+          "--config-file=pyproject.toml",
+          "--show-error-codes",
+          "--pretty",
+        ]
+        additional_dependencies: [
+            "types-requests",
+            "types-aiofiles",
+            "types-pytz",
+            "pydantic",
+            "chainlit",
+            "anthropic",
+            "fastapi",
+            "httpx",
+            "tiktoken",
+            "weave",
+            "chromadb",
+            "cohere",
+            "langchain"
+        ]
+        entry: bash -c 'mypy "$@" || true' --
+
+  # === Code Quality & Style ===
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
+    hooks:
+      - id: ruff
+        name: Run Ruff linter
+        args: [
+          --fix,
+          --exit-zero,
+          --quiet,
+        ]
+        types_or: [python, pyi, jupyter]
+        files: ^(src|tests)/
+        exclude: ^src/experimental/
+        verbose: false
+      - id: ruff-format
+        name: Run Ruff formatter
+        types_or: [python, pyi, jupyter]
+
+  # === Documentation Checks ===
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.13.6
+    hooks:
+      - id: markdown-link-check
+        name: Check Markdown links
+        description: Extracts links from markdown texts and checks they're all alive
+        stages: [pre-commit, pre-push, manual]
+
+  # === Testing ===
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run tests
+        entry: pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: [
+          "--no-header",
+          "--quiet",
+          "--no-summary",
+          "--show-capture=no",
+          "--tb=line"  # Show only one line per failure
+        ]
+        stages: [pre-commit, pre-push]
+
+  # === Build Check ===
+  - repo: local
+    hooks:
+      - id: build-check
+        name: Check build
+        entry: uv build
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+      - id: version-check
+        name: Check package version
+        # Print version from the built package
+        entry: python -c "from supabase_mcp import __version__; print('📦 Package version:', __version__)"
+        language: system
+        verbose: true
+        pass_filenames: false
+        stages: [pre-commit, pre-push]

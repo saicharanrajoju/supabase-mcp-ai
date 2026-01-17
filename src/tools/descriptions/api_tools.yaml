@@ -1,0 +1,107 @@
+# API tools descriptions
+
+send_management_api_request: |
+  Execute a Supabase Management API request.
+
+  This tool allows you to make direct calls to the Supabase Management API, which provides
+  programmatic access to manage your Supabase project settings, resources, and configurations.
+
+  REQUEST FORMATTING:
+  - Use paths exactly as defined in the API specification
+  - The {ref} parameter will be automatically injected from settings
+  - Format request bodies according to the API specification
+
+  PARAMETERS:
+  - method: HTTP method (GET, POST, PUT, PATCH, DELETE)
+  - path: API path (e.g. /v1/projects/{ref}/functions)
+  - path_params: Path parameters as dict (e.g. {"function_slug": "my-function"}) - use empty dict {} if not needed
+  - request_params: Query parameters as dict (e.g. {"key": "value"}) - use empty dict {} if not needed
+  - request_body: Request body as dict (e.g. {"name": "test"}) - use empty dict {} if not needed
+
+  PATH PARAMETERS HANDLING:
+  - The {ref} placeholder (project reference) is automatically injected - you don't need to provide it
+  - All other path placeholders must be provided in the path_params dictionary
+  - Common placeholders include:
+    * {function_slug}: For Edge Functions operations
+    * {id}: For operations on specific resources (API keys, auth providers, etc.)
+    * {slug}: For organization operations
+    * {branch_id}: For database branch operations
+    * {provider_id}: For SSO provider operations
+    * {tpa_id}: For third-party auth operations
+
+  EXAMPLES:
+  1. GET request with path and query parameters:
+     method: "GET"
+     path: "/v1/projects/{ref}/functions/{function_slug}"
+     path_params: {"function_slug": "my-function"}
+     request_params: {"version": "1"}
+     request_body: {}
+
+  2. POST request with body:
+     method: "POST"
+     path: "/v1/projects/{ref}/functions"
+     path_params: {}
+     request_params: {}
+     request_body: {"name": "test-function", "slug": "test-function"}
+
+  SAFETY SYSTEM:
+  API operations are categorized by risk level:
+  - LOW RISK: Read operations (GET) - allowed in SAFE mode
+  - MEDIUM/HIGH RISK: Write operations (POST, PUT, PATCH, DELETE) - require UNSAFE mode
+  - EXTREME RISK: Destructive operations - require UNSAFE mode and confirmation
+  - BLOCKED: Some operations are completely blocked for safety reasons
+
+  SAFETY CONSIDERATIONS:
+  - By default, the API client starts in SAFE mode, allowing only read operations
+  - To perform write operations, first use live_dangerously(service="api", enable=True)
+  - High-risk operations will be rejected with a confirmation ID
+  - Use confirm_destructive_operation with the provided ID after reviewing risks
+  - Some operations may be completely blocked for safety reasons
+
+  For a complete list of available API endpoints and their parameters, use the get_management_api_spec tool.
+  For details on safety rules, use the get_management_api_safety_rules tool.
+
+get_management_api_spec: |
+  Get the complete Supabase Management API specification.
+
+  Returns the full OpenAPI specification for the Supabase Management API, including:
+  - All available endpoints and operations
+  - Required and optional parameters for each operation
+  - Request and response schemas
+  - Authentication requirements
+  - Safety information for each operation
+
+  This tool can be used in four different ways:
+  1. Without parameters: Returns all domains (default)
+  2. With path and method: Returns the full specification for a specific API endpoint
+  3. With domain only: Returns all paths and methods within that domain
+  4. With all_paths=True: Returns all paths and methods
+
+  Parameters:
+  - params: Dictionary containing optional parameters:
+      - path: Optional API path (e.g., "/v1/projects/{ref}/functions")
+      - method: Optional HTTP method (e.g., "GET", "POST")
+      - domain: Optional domain/tag name (e.g., "Auth", "Storage")
+      - all_paths: Optional boolean, if True returns all paths and methods
+
+  Available domains:
+  - Analytics: Analytics-related endpoints
+  - Auth: Authentication and authorization endpoints
+  - Database: Database management endpoints
+  - Domains: Custom domain configuration endpoints
+  - Edge Functions: Serverless function management endpoints
+  - Environments: Environment configuration endpoints
+  - OAuth: OAuth integration endpoints
+  - Organizations: Organization management endpoints
+  - Projects: Project management endpoints
+  - Rest: RESTful API endpoints
+  - Secrets: Secret management endpoints
+  - Storage: Storage management endpoints
+
+  This specification is useful for understanding:
+  - What operations are available through the Management API
+  - How to properly format requests for each endpoint
+  - Which operations require unsafe mode
+  - What data structures to expect in responses
+
+  SAFETY: This is a low-risk read operation that can be executed in SAFE mode.

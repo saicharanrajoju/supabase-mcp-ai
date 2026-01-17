@@ -1,0 +1,86 @@
+# Safety tools descriptions
+
+live_dangerously: |
+  Toggle unsafe mode for either Management API or Database operations.
+
+  WHAT THIS TOOL DOES:
+  This tool switches between safe (default) and unsafe operation modes for either the Management API or Database operations.
+
+  SAFETY MODES EXPLAINED:
+  1. Database Safety Modes:
+     - SAFE mode (default): Only low-risk operations like SELECT queries are allowed
+     - UNSAFE mode: Higher-risk operations including INSERT, UPDATE, DELETE, and schema changes are permitted
+
+  2. API Safety Modes:
+     - SAFE mode (default): Only low-risk operations that don't modify state are allowed
+     - UNSAFE mode: Higher-risk state-changing operations are permitted (except those explicitly blocked for safety)
+
+  OPERATION RISK LEVELS:
+  The system categorizes operations by risk level:
+  - LOW: Safe read operations with minimal impact
+  - MEDIUM: Write operations that modify data but don't change structure
+  - HIGH: Operations that modify database structure or important system settings
+  - EXTREME: Destructive operations that could cause data loss or service disruption
+
+  WHEN TO USE THIS TOOL:
+  - Use this tool BEFORE attempting write operations or schema changes
+  - Enable unsafe mode only when you need to perform data modifications
+  - Always return to safe mode after completing write operations
+
+  USAGE GUIDELINES:
+  - Start in safe mode by default for exploration and analysis
+  - Switch to unsafe mode only when you need to make changes
+  - Be specific about which service you're enabling unsafe mode for
+  - Consider the risks before enabling unsafe mode, especially for database operations
+  - For database operations requiring schema changes, you'll need to enable unsafe mode first
+
+  Parameters:
+  - service: Which service to toggle ("api" or "database")
+  - enable_unsafe_mode: True to enable unsafe mode, False for safe mode (default: False)
+
+  Examples:
+  1. Enable database unsafe mode:
+     live_dangerously(service="database", enable_unsafe_mode=True)
+
+  2. Return to safe mode after operations:
+     live_dangerously(service="database", enable_unsafe_mode=False)
+
+  3. Enable API unsafe mode:
+     live_dangerously(service="api", enable_unsafe_mode=True)
+
+  Note: This tool affects ALL subsequent operations for the specified service until changed again.
+
+confirm_destructive_operation: |
+  Execute a destructive database or API operation after confirmation. Use this only after reviewing the risks with the user.
+
+  HOW IT WORKS:
+  - This tool executes a previously rejected high-risk operation using its confirmation ID
+  - The operation will be exactly the same as the one that generated the ID
+  - No need to retype the query or api request params - the system remembers it
+
+  STEPS:
+  1. Explain the risks to the user and get their approval
+  2. Use this tool with the confirmation ID from the error message
+  3. The original query will be executed as-is
+
+  PARAMETERS:
+  - operation_type: Type of operation ("api" or "database")
+  - confirmation_id: The ID provided in the error message (required)
+  - user_confirmation: Set to true to confirm execution (default: false)
+
+  NOTE: Confirmation IDs expire after 5 minutes for security
+
+get_management_api_safety_rules: |
+  Get all safety rules for the Supabase Management API.
+
+  Returns a comprehensive overview of all safety rules applied to the Management API, including:
+  - Blocked operations (never allowed)
+  - Unsafe operations (allowed only in unsafe mode)
+  - Safe operations (always allowed)
+
+  Each rule includes:
+  - The HTTP method and path pattern
+  - A human-readable explanation of why the operation has its safety designation
+  - The safety level assigned to the operation
+
+  This information helps you understand which operations require unsafe mode and why certain operations might be completely blocked for safety reasons.

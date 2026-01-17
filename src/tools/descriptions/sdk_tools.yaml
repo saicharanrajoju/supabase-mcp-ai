@@ -1,0 +1,64 @@
+# Python SDK tools descriptions
+
+get_auth_admin_methods_spec: |
+  Get Python SDK methods specification for Auth Admin.
+
+  Returns a comprehensive dictionary of all Auth Admin methods available in the Supabase Python SDK, including:
+  - Method names and descriptions
+  - Required and optional parameters for each method
+  - Parameter types and constraints
+  - Return value information
+
+  This tool is useful for exploring the capabilities of the Auth Admin SDK and understanding
+  how to properly format parameters for the call_auth_admin_method tool.
+
+  No parameters required.
+
+call_auth_admin_method: |
+  Call an Auth Admin method from Supabase Python SDK.
+
+  This tool provides a safe, validated interface to the Supabase Auth Admin SDK, allowing you to:
+  - Manage users (create, update, delete)
+  - List and search users
+  - Generate authentication links
+  - Manage multi-factor authentication
+  - And more
+
+  IMPORTANT NOTES:
+  - Request bodies must adhere to the Python SDK specification
+  - Some methods may have nested parameter structures
+  - The tool validates all parameters against Pydantic models
+  - Extra fields not defined in the models will be rejected
+
+  AVAILABLE METHODS:
+  - get_user_by_id: Retrieve a user by their ID
+  - list_users: List all users with pagination
+  - create_user: Create a new user
+  - delete_user: Delete a user by their ID
+  - invite_user_by_email: Send an invite link to a user's email
+  - generate_link: Generate an email link for various authentication purposes
+  - update_user_by_id: Update user attributes by ID
+  - delete_factor: Delete a factor on a user
+
+  EXAMPLES:
+  1. Get user by ID:
+     method: "get_user_by_id"
+     params: {"uid": "user-uuid-here"}
+
+  2. Create user:
+     method: "create_user"
+     params: {
+       "email": "user@example.com",
+       "password": "secure-password"
+     }
+
+  3. Update user by ID:
+     method: "update_user_by_id"
+     params: {
+       "uid": "user-uuid-here",
+       "attributes": {
+         "email": "new@email.com"
+       }
+     }
+
+  For complete documentation of all methods and their parameters, use the get_auth_admin_methods_spec tool.

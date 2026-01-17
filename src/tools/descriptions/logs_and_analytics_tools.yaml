@@ -1,0 +1,69 @@
+# Tools related to logs and Advisor analytics
+
+retrieve_logs: |
+  Retrieve logs from your Supabase project's services for debugging and monitoring.
+
+  Returns log entries from various Supabase services with timestamps, messages, and metadata.
+  This tool provides access to the same logs available in the Supabase dashboard's Logs & Analytics section.
+
+  AVAILABLE LOG COLLECTIONS:
+  - postgres: Database server logs including queries, errors, warnings, and system messages
+  - api_gateway: API requests, responses, and errors processed by the Kong API gateway
+  - auth: Authentication and authorization logs for sign-ups, logins, and token operations
+  - postgrest: Logs from the RESTful API service that exposes your PostgreSQL database
+  - pooler: Connection pooling logs from pgbouncer and supavisor services
+  - storage: Object storage service logs for file uploads, downloads, and permissions
+  - realtime: Logs from the real-time subscription service for WebSocket connections
+  - edge_functions: Serverless function execution logs including invocations and errors
+  - cron: Scheduled job logs (can be queried through postgres logs with specific filters)
+  - pgbouncer: Connection pooler logs
+
+  PARAMETERS:
+  - collection: The log collection to query (required, one of the values listed above)
+  - limit: Maximum number of log entries to return (default: 20)
+  - hours_ago: Retrieve logs from the last N hours (default: 1)
+  - filters: List of filter objects with field, operator, and value (default: [])
+    Format: [{"field": "field_name", "operator": "=", "value": "value"}]
+  - search: Text to search for in event messages (default: "")
+  - custom_query: Complete custom SQL query to execute instead of the pre-built queries (default: "")
+
+  HOW IT WORKS:
+  This tool makes a request to the Supabase Management API endpoint for logs, sending
+  either a pre-built optimized query for the selected collection or your custom query.
+  Each log collection has a specific table structure and metadata format that requires
+  appropriate CROSS JOIN UNNEST operations to access nested fields.
+
+  EXAMPLES:
+  1. Using pre-built parameters:
+     collection: "postgres"
+     limit: 20
+     hours_ago: 24
+     filters: [{"field": "parsed.error_severity", "operator": "=", "value": "ERROR"}]
+     search: "connection"
+
+  2. Using a custom query:
+     collection: "edge_functions"
+     custom_query: "SELECT id, timestamp, event_message, m.function_id, m.execution_time_ms
+                   FROM function_edge_logs
+                   CROSS JOIN unnest(metadata) AS m
+                   WHERE m.execution_time_ms > 1000
+                   ORDER BY timestamp DESC LIMIT 10"
+
+  METADATA STRUCTURE:
+  The metadata structure is important because it determines how to access nested fields in filters:
+  - postgres_logs: Use "parsed.field_name" for fields like error_severity, query, application_name
+  - edge_logs: Use "request.field_name" or "response.field_name" for HTTP details
+  - function_edge_logs: Use "function_id", "execution_time_ms" for function metrics
+
+  NOTE FOR LLM CLIENTS:
+  When encountering errors with field access, examine the error message to see what fields are
+  actually available in the structure. Start with basic fields before accessing nested metadata.
+
+  SAFETY CONSIDERATIONS:
+  - This is a low-risk read operation that can be executed in SAFE mode
+  - Requires a valid Supabase Personal Access Token to be configured
+  - Not available for local Supabase instances (requires cloud deployment)
+
+
+retrieve_advisor_analytics: |
+  Get advisor analytics from the database.
